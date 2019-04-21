@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <windows.h>
 
-
-//#include "..\iIniFileReader\iIniFileReader.h"
 #include "..\iniFileReader\iniFileReader.h"
+#include "..\iniFileReader\iniItem.h"
 
 int main(int argv, char** argc)
 {
@@ -18,16 +17,24 @@ int main(int argv, char** argc)
 	}
 	ini->load();
 	ini->print();
+
+	{
+		// testing iniitem TODO: remove 
+		INI::iniItem i1(nullptr);
+		i1.print();
+		INI::iniItem i2("");
+		i2.print();
+		INI::iniItem i3("=");
+		i3.print();
+		INI::iniItem i4("key");
+		i4.print();
+		INI::iniItem i5("key=");
+		i5.print();
+		INI::iniItem i6("key=value");
+		i6.print();
+		INI::iniItem i7("=value");
+		i7.print();
+	}
+
 	delete ini;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
