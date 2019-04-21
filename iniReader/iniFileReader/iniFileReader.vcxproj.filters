@@ -24,6 +24,9 @@
     <ClInclude Include="iniSection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="chainedIniItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iniFileReader.cpp">
@@ -33,6 +36,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="iniSection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chainedIniItem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

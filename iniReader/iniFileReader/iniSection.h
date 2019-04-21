@@ -1,6 +1,8 @@
 #pragma once
 #include <string.h>
+#include <stdio.h>
 #include "..\iIniFileReader\iIniSection.h"
+#include "chainedIniItem.h"
 namespace INI
 {
 class iniSection
@@ -12,9 +14,11 @@ public:
 	virtual bool add(iIniItem * item);
 	virtual const char * const getName();
 	virtual iIniItem const * find(const char * const name);
-	virtual void print() = 0;
+	virtual void print();
 private:
 	char * mName;
+	chainedIniItem * mIniItems;
+	chainedIniItem * mLastIniItem;
 };
 }
 

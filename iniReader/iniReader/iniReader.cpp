@@ -4,6 +4,7 @@
 
 #include "..\iniFileReader\iniFileReader.h"
 #include "..\iniFileReader\iniItem.h"
+#include "..\iniFileReader\iniSection.h"
 
 int main(int argv, char** argc)
 {
@@ -17,6 +18,7 @@ int main(int argv, char** argc)
 	}
 	ini->load();
 	ini->print();
+
 
 	{
 		// testing iniitem TODO: remove 
@@ -35,6 +37,27 @@ int main(int argv, char** argc)
 		INI::iniItem i7("=value");
 		i7.print();
 	}
-
+	{
+		INI::iIniSection * sec = new INI::iniSection(nullptr);
+		sec->print();
+		delete sec;
+	}
+	{
+		INI::iIniSection * sec = new INI::iniSection("");
+		sec->print();
+		delete sec;
+	}
+	{
+		INI::iIniSection * sec = new INI::iniSection("test");
+		sec->print();
+		delete sec;
+	}
+	{
+		INI::iIniSection * sec = new INI::iniSection("test");
+		sec->add(new INI::iniItem("key=value"));
+		sec->add(new INI::iniItem("key2=value2"));
+		sec->print();
+		delete sec;
+	}
 	delete ini;
 }
