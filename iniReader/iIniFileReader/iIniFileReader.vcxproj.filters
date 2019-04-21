@@ -18,9 +18,21 @@
     <ClInclude Include="iIniFileReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="iIniItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iIniSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iIniFileReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iIniItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iIniSection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

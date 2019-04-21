@@ -3,6 +3,7 @@
 #include "iniItem.h"
 
 INI::iniItem::iniItem(const char * const line)
+	: iIniItem(line)
 {
 	mKey = nullptr;
 	mValue = nullptr;

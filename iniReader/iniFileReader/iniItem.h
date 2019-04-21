@@ -1,18 +1,20 @@
 #pragma once
+#include "..\iIniFileReader\iIniItem.h"
 namespace INI
 {
-	class iniItem
+	class iniItem 
+		: public iIniItem
 	{
 	public:
 		iniItem(const char * const line);
-		~iniItem();
-		void setKey(const char * const to);
-		void setValue(const char * const to);
-		bool hasKey();
-		bool hasValue();
-		const char * const getKey();
-		const char * const getValue();
-		void print();
+		virtual ~iniItem();
+		virtual void setKey(const char * const to);
+		virtual void setValue(const char * const to);
+		virtual bool hasKey();
+		virtual bool hasValue();
+		virtual const char * const getKey();
+		virtual const char * const getValue();
+		virtual void print();
 
 	private:
 		char* mKey;

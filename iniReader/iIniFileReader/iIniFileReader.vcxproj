@@ -118,9 +118,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="iIniFileReader.h" />
+    <ClInclude Include="iIniItem.h" />
+    <ClInclude Include="iIniSection.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iIniFileReader.cpp" />
+    <ClCompile Include="iIniItem.cpp" />
+    <ClCompile Include="iIniSection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

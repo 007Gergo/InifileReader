@@ -21,12 +21,18 @@
     <ClInclude Include="iniItem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="iniSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iniFileReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="iniItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iniSection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
