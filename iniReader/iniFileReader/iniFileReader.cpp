@@ -23,6 +23,6 @@ bool iniFileReader::changed()
 
 void iniFileReader::print()
 { 
-	printf("Print");
+	printf("Print..\n");
 }
 }
