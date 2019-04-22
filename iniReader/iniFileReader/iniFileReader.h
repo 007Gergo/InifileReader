@@ -1,5 +1,6 @@
 #pragma once
 #include "..\iIniFileReader\iIniFileReader.h"
+#include "chainedIniSection.h"
 
 namespace INI
 {
@@ -19,12 +20,14 @@ private:
 	bool isSection(const char * const line);
 	bool isItem(const char * const line);
 
-	bool setCurrentSection(const char * const line);
-
+	void clearIniSections();
+	const char * const getSectionName(const char * const line, bool & isOk);
+	iIniSection * findSection(const char * const name);
+	iIniSection * addSection(const char * const name);
 	bool mHasError;
 	char * mFileName;
-	char * mCurrentSection;
-
+	chainedIniSection * mIniSections;
+	chainedIniSection * mLastIniSection;
 };
 }
 

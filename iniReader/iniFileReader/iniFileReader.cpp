@@ -1,9 +1,13 @@
 #include <string.h>
 #include <stdio.h>
 #include "iniFileReader.h"
+#include "iniSection.h"
+#include "iniItem.h"
 
-INI::iniFileReader::iniFileReader(const char * const fileName) 
-	: iIniFileReader(), mHasError(true), mFileName(nullptr), mCurrentSection(nullptr)
+#define MAXBUFFERSIZE 1024
+
+INI::iniFileReader::iniFileReader(const char * const fileName)
+	: iIniFileReader(), mHasError(true), mFileName(nullptr), mIniSections(nullptr)
 {
 	const size_t len = strlen(fileName) + 1;
 	mFileName = new char[len];
@@ -13,18 +17,62 @@ INI::iniFileReader::iniFileReader(const char * const fileName)
 INI::iniFileReader::~iniFileReader()
 {
 	delete[] mFileName;
-	delete[] mCurrentSection;
+	clearIniSections();
+}
+
+void INI::iniFileReader::clearIniSections()
+{
+	chainedIniSection * current = mIniSections;
+	while (current)
+	{
+		auto next = current->next();
+		delete current->get();
+		delete current;
+		current = next;
+	}
+	mIniSections = nullptr;
+	mLastIniSection = nullptr;
 }
 
 bool INI::iniFileReader::load()
-{	
+{
+	clearIniSections();
+	mLastIniSection = nullptr;
+	if (!mFileName)
+	{
+		printf("[ERR] Can't open file: file name is empty!\n");
+		mHasError = true;
+		return false;
+	}
+
+	FILE *file;
+	if (fopen_s(&file, mFileName, "r") || !file)
+	{
+		printf("[ERR] Can't open file %s\n", mFileName);
+		mHasError = true;
+		return false;
+	}
+
+	char line[MAXBUFFERSIZE + 1];
+
 	mHasError = false;
 	int lineNo = 0;
-	while (false)
+	iIniSection * currentSection = nullptr;
+	while (fgets(line, sizeof(line), file) != nullptr) /* read a line */
 	{
 		++lineNo;
-		const char * line = " ";
-
+		size_t lineLen = strlen(line);
+		while (lineLen && (line[lineLen-1] == '\r' || line[lineLen-1] == '\n'))
+		{
+			line[lineLen-1] = '\0';
+			--lineLen;
+		}
+		if (lineLen == MAXBUFFERSIZE)
+		{
+			printf("[ERR] line %d is to long: %s\n", lineNo, line);
+			mHasError = true;
+			continue;
+		}
 		if (isEmptyLine(line))
 		{
 			continue;
@@ -36,22 +84,42 @@ bool INI::iniFileReader::load()
 
 		if (isSection(line))
 		{
-			if(!setCurrentSection(line))
+			bool isOK = false;
+			const char * const currentName = getSectionName(line, isOK);
+			if (!isOK)
 			{
-				printf("[ERR] Wrong foramated section in line %d: %s", lineNo, line);
+				printf("[ERR] Wrong foramated section in line %d: %s\n", lineNo, line);
 				mHasError = true;
 				continue;
+			}
+			currentSection = findSection(currentName);
+			if (!currentSection)
+			{
+				currentSection = addSection(currentName);
 			}
 		}
 		else if (isItem(line))
 		{
+			INI::iniItem * newItem = new INI::iniItem(line);
+			if (!newItem->hasKey())
+			{
+				printf("[ERR] Wrong foramated key-value pair in line %d: %s\n", lineNo, line);
+				mHasError = true;
+			}
+			if (!currentSection)
+			{
+				printf("[WRN] key-value pair not in a section in line %d: %s\n", lineNo, line);
+				currentSection = addSection(nullptr);
+			}
+			currentSection->add(newItem);
 		}
 		else
 		{
-			printf("[ERR] Unknown line %d: %s", lineNo, line);
+			printf("[ERR] Unknown line %d: %s\n", lineNo, line);
 			mHasError = true;
 		}
 	}
+	fclose(file);
 	return mHasError;
 }
 
@@ -67,7 +135,16 @@ bool INI::iniFileReader::hasError()
 
 void INI::iniFileReader::print()
 { 
-	printf("Print..\n");
+	INI::chainedIniSection * iter = mIniSections;
+	while (iter)
+	{
+		INI::iIniSection * iniSection = iter->get();
+		if (iniSection)
+		{
+			iniSection->print();
+		}
+		iter = iter->next();
+	}
 }
 
 bool INI::iniFileReader::isEmptyLine(const char * const line)
@@ -116,11 +193,12 @@ bool INI::iniFileReader::isItem(const char * const line)
 	return  *itr == '=';
 }
 
-bool INI::iniFileReader::setCurrentSection(const char * const line)
+const char * const INI::iniFileReader::getSectionName(const char * const line, bool & isOk)
 {
+	isOk = false;
 	if (!line)
 	{
-		return false;
+		return nullptr;
 	}
 	const char * section = line;
 	++section;
@@ -133,7 +211,7 @@ bool INI::iniFileReader::setCurrentSection(const char * const line)
 	if (!*itr)
 	{
 		/// missing ']'
-		return false;
+		return nullptr;
 	}
 
 	const size_t len = itr - section;
@@ -142,15 +220,59 @@ bool INI::iniFileReader::setCurrentSection(const char * const line)
 	if (*itr)
 	{
 		/// extra character after ']'
-		return false;
+		return nullptr;
 	}
 
-	delete mCurrentSection;
-	mCurrentSection = new char[len + 1];
+	char * currentSection = nullptr;
 	if (len)
 	{
-		strncpy_s(mCurrentSection, len + 1, section, len);
+		currentSection = new char[len + 1];
+		strncpy_s(currentSection, len + 1, section, len);
+		currentSection[len] = '\0';
 	}
-	mCurrentSection[len] = '\0';
-	return true;
+	isOk = true;
+	return currentSection;
+}
+
+INI::iIniSection * INI::iniFileReader::findSection(const char * const name)
+{
+	chainedIniSection * current = mIniSections;
+	while (current)
+	{
+		INI::iIniSection * section = current->get();
+		if (!section)
+		{
+			continue;
+		}
+		const char * const currentName = section->getName();
+		if (!name && !currentName)
+		{
+			return section;
+		}
+		if (!name || !currentName)
+		{
+			continue;
+		}
+		if (!strcmp(name, currentName))
+		{
+			return section;
+		}
+		current = current->next();
+	}
+	return nullptr;
+}
+INI::iIniSection * INI::iniFileReader::addSection(const char * const name)
+{
+	INI::iIniSection * aSection = new INI::iniSection(name);
+	INI::chainedIniSection * newSection = new INI::chainedIniSection(aSection);
+	if (mLastIniSection)
+	{
+		mLastIniSection->setNext(newSection);
+	}
+	else
+	{
+		mIniSections = newSection;
+	}
+	mLastIniSection = newSection;
+	return aSection;
 }

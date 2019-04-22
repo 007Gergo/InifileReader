@@ -7,7 +7,7 @@ class chainedIniItem
 public:
 	chainedIniItem(iIniItem * iniItem);
 	virtual ~chainedIniItem();
-	void setNext(chainedIniItem *);
+	void setNext(chainedIniItem * to);
 	chainedIniItem * next();
 	iIniItem * get();
 private:

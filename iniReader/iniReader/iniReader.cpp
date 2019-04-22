@@ -8,7 +8,7 @@
 
 int main(int argv, char** argc)
 {
-	const char * fileName = "file.ini";
+	const char * fileName = "d:\\file.ini";
 	INI::iIniFileReader * ini = new INI::iniFileReader(fileName);
 	ini->load();
 	ini->print();
@@ -19,14 +19,14 @@ int main(int argv, char** argc)
 	ini->load();
 	ini->print();
 
-
+/*
 	{
 		// testing iniitem TODO: remove 
 		INI::iniItem i1(nullptr);
 		i1.print();
 		INI::iniItem i2("");
 		i2.print();
-		INI::iniItem i3("=");
+		INI::iniItem i3(" = ");
 		i3.print();
 		INI::iniItem i4("key");
 		i4.print();
@@ -34,9 +34,10 @@ int main(int argv, char** argc)
 		i5.print();
 		INI::iniItem i6("key=value");
 		i6.print();
-		INI::iniItem i7("=value");
+		INI::iniItem i7("= value");
 		i7.print();
 	}
+	
 	{
 		INI::iIniSection * sec = new INI::iniSection(nullptr);
 		sec->print();
@@ -59,5 +60,6 @@ int main(int argv, char** argc)
 		sec->print();
 		delete sec;
 	}
+	*/
 	delete ini;
 }

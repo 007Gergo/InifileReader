@@ -23,13 +23,19 @@ INI::iniItem::iniItem(const char * const line)
 		setValue(nullptr);
 		return;
 	} 
-	const size_t len = itr - line;
-	mKey = new char[len + 1];
+	size_t len = itr - line;
+	//rigthtrim
+	while (len && line[len - 1] == ' ')
+	{
+		--len;
+	}
+	//handling empty string as nullptr
 	if (len)
 	{
+		mKey = new char[len + 1];
 		strncpy_s(mKey, len + 1, line, len);
+		mKey[len] = '\0';
 	}
-	mKey[len] = '\0';
 	setValue(++itr);
 }
 
@@ -44,11 +50,21 @@ void INI::iniItem::setKey(const char * const to)
 	delete[] mKey;
 	mKey = nullptr;
 
-	if (to)
+	//handling empty string as nullptr
+	if (to && *to)
 	{
-		const size_t len = strlen(to) + 1 ;
-		mKey = new char[len];
-		strcpy_s(mKey, len, to);
+		size_t len = strlen(to);
+		// rigthtrim
+		while (len && to[len - 1] == ' ')
+		{
+			--len;
+		}
+		if (len)
+		{
+			++len;
+			mKey = new char[len];
+			strcpy_s(mKey, len, to);
+		}
 	}
 }
 
@@ -56,12 +72,18 @@ void INI::iniItem::setValue(const char * const to)
 {
 	delete[] mValue;
 	mValue = nullptr;
-
-	if (to)
+	const char * itr = to;
+	// leftrim
+	while (itr && *itr == ' ')
 	{
-		const size_t len = strlen(to) +1 ;
+		++itr;
+	}
+	//handling empty string as nullptr
+	if (itr && *itr )
+	{
+		const size_t len = strlen(itr) +1 ;
 		mValue = new char[len];
-		strcpy_s(mValue, len, to);
+		strcpy_s(mValue, len, itr);
 	}
 }
 
@@ -87,5 +109,5 @@ const char * const INI::iniItem::getValue()
 
 void INI::iniItem::print()
 {
-	printf("%s=%s\n", hasKey() ? getKey() : "NULL", hasValue() ? getValue() : "NULL");
+	printf("%s = %s\n", hasKey() ? getKey() : "", hasValue() ? getValue() : "");
 }
