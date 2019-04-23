@@ -1,17 +1,19 @@
 #pragma once
-#include "..\iIniFileReader\iIniSection.h"
+#include "..\iIniFileReader\iChainedIniSection.h"
+
 namespace INI
 {
-class chainedIniSection
-{
-public:
-	chainedIniSection(iIniSection * iniSection);
-	virtual ~chainedIniSection();
-	void setNext(chainedIniSection * to);
-	chainedIniSection * next();
-	iIniSection * get();
-private:
-	iIniSection * mIniSection;
-	chainedIniSection * mNext;
-};
+	class chainedIniSection
+		: public iChainedIniSection
+	{
+	public:
+		chainedIniSection(iIniSection * iniSection);
+		virtual ~chainedIniSection();
+		virtual void setNext(iChainedIniSection * to);
+		virtual iChainedIniSection * next();
+		virtual iIniSection * get();
+	private:
+		iIniSection * mIniSection;
+		iChainedIniSection * mNext;
+	};
 }

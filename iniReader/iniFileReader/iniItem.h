@@ -1,8 +1,9 @@
 #pragma once
 #include "..\iIniFileReader\iIniItem.h"
+
 namespace INI
 {
-	class iniItem 
+	class iniItem
 		: public iIniItem
 	{
 	public:

@@ -15,9 +15,9 @@ INI::iniSection::iniSection(const char * const name)
 INI::iniSection::~iniSection()
 {
 	delete[] mName;
-	chainedIniItem * current = mIniItems;
-	while(current)
-	{	
+	iChainedIniItem * current = mIniItems;
+	while (current)
+	{
 		auto next = current->next();
 		delete current->get();
 		delete current;
@@ -45,6 +45,11 @@ const char * const INI::iniSection::getName()
 	return mName;
 }
 
+INI::iChainedIniItem * INI::iniSection::getIninItems()
+{
+	return mIniItems;
+}
+
 INI::iIniItem const * INI::iniSection::find(const char * const key)
 {
 	if (key && !key)
@@ -52,7 +57,7 @@ INI::iIniItem const * INI::iniSection::find(const char * const key)
 		// convert empty string to nullptr;
 		find(nullptr);
 	}
-	INI::chainedIniItem * current = mIniItems;
+	INI::iChainedIniItem * current = mIniItems;
 	while (current)
 	{
 		INI::iIniItem * iniItem = current->get();
@@ -80,12 +85,11 @@ INI::iIniItem const * INI::iniSection::find(const char * const key)
 
 void INI::iniSection::print()
 {
-	printf("........\n");
 	if (mName)
 	{
 		printf("[%s]\n", mName);
 	}
-	INI::chainedIniItem * iter = mIniItems;
+	INI::iChainedIniItem * iter = mIniItems;
 	while (iter)
 	{
 		INI::iIniItem *	iniItem = iter->get();
@@ -95,5 +99,5 @@ void INI::iniSection::print()
 		}
 		iter = iter->next();
 	}
-	printf("-------\n");
+	printf("\n");
 }

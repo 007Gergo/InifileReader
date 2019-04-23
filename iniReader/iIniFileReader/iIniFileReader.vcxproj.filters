@@ -24,6 +24,12 @@
     <ClInclude Include="iIniSection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="iChainedIniItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iChainedIniSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="iIniFileReader.cpp">
@@ -33,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="iIniSection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iChainedIniItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iChainedIniSection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

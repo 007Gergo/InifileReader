@@ -117,11 +117,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="iChainedIniItem.h" />
+    <ClInclude Include="iChainedIniSection.h" />
     <ClInclude Include="iIniFileReader.h" />
     <ClInclude Include="iIniItem.h" />
     <ClInclude Include="iIniSection.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="iChainedIniItem.cpp" />
+    <ClCompile Include="iChainedIniSection.cpp" />
     <ClCompile Include="iIniFileReader.cpp" />
     <ClCompile Include="iIniItem.cpp" />
     <ClCompile Include="iIniSection.cpp" />

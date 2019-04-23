@@ -22,7 +22,7 @@ INI::iniItem::iniItem(const char * const line)
 		setKey(line);
 		setValue(nullptr);
 		return;
-	} 
+	}
 	size_t len = itr - line;
 	//rigthtrim
 	while (len && line[len - 1] == ' ')
@@ -79,20 +79,20 @@ void INI::iniItem::setValue(const char * const to)
 		++itr;
 	}
 	//handling empty string as nullptr
-	if (itr && *itr )
+	if (itr && *itr)
 	{
-		const size_t len = strlen(itr) +1 ;
+		const size_t len = strlen(itr) + 1;
 		mValue = new char[len];
 		strcpy_s(mValue, len, itr);
 	}
 }
 
-bool INI::iniItem::hasKey() 
+bool INI::iniItem::hasKey()
 {
 	return mKey;
 }
 
-bool INI::iniItem:: hasValue()
+bool INI::iniItem::hasValue()
 {
 	return mValue;
 }

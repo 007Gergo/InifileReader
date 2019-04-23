@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "chainedIniItem.h"
 
-INI::chainedIniItem::chainedIniItem(iIniItem * iniItem) 
-	: mIniItem(iniItem), mNext(nullptr)
+INI::chainedIniItem::chainedIniItem(iIniItem * iniItem)
+	: iChainedIniItem(iniItem), mIniItem(iniItem), mNext(nullptr)
 {
 }
 
@@ -10,12 +10,12 @@ INI::chainedIniItem::~chainedIniItem()
 {
 }
 
-void INI::chainedIniItem::setNext(INI::chainedIniItem * to)
+void INI::chainedIniItem::setNext(INI::iChainedIniItem * to)
 {
 	mNext = to;
 }
 
-INI::chainedIniItem * INI::chainedIniItem::next()
+INI::iChainedIniItem * INI::chainedIniItem::next()
 {
 	return mNext;
 }
