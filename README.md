@@ -10,15 +10,24 @@ Usage: iniReader.exe inifile
 A sample inifile: 
 
 [Elso]
+
 Kulcs1 = Ertek1
+
 Kulcs2 = 10
+
 Kulcs3 = 11.45
+
 Kulcs4 = false
 
+
 [Masodik]
+
 KulcsM1 = Masodik szekcio elso erteke
+
 KulcsM2 = true
+
 KulcsM3 = 8686
+
 KulcsM4 = b
 
  
