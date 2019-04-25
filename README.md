@@ -7,6 +7,9 @@ Usage: iniReader.exe inifile
 3) if the inifile change read it in again.
 4) print the elements of the inifile to console
 
+For more read the wiki page:
+see:  https://github.com/007Gergo/InifileReader/wiki/Inifile-Reader
+
 A sample inifile: 
 
 [Elso]
