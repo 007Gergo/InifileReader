@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "..\iIniFileReader\iIniItem.h"
 
 namespace INI
@@ -7,18 +8,18 @@ namespace INI
 		: public iIniItem
 	{
 	public:
-		iniItem(const char * const line);
+		iniItem(const std::string& line);
 		virtual ~iniItem();
-		virtual void setKey(const char * const to);
-		virtual void setValue(const char * const to);
-		virtual bool hasKey();
-		virtual bool hasValue();
-		virtual const char * const getKey();
-		virtual const char * const getValue();
-		virtual void print();
+		virtual void setKey(const std::string&  to);
+		virtual void setValue(const std::string&  to);
+		virtual const std::string& getKey() const;
+		virtual const std::string& getValue() const;
+		virtual void print() const;
+		virtual bool operator==(const iIniItem& other) const;
+		virtual bool operator<(const iIniItem& other) const;
 
 	private:
-		char* mKey;
-		char* mValue;
+		std::string mKey;
+		std::string mValue;
 	};
 }

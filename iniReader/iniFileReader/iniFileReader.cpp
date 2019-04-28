@@ -136,7 +136,7 @@ bool INI::iniFileReader::load()
 		else if (isItem(line))
 		{
 			INI::iIniItem * newItem = new INI::iniItem(line);
-			if (!newItem->hasKey())
+			if (newItem->getKey().empty())
 			{
 				printf("[ERR] Wrong foramated key-value pair in line %d: %s\n", lineNo, line);
 				mHasError = true;
@@ -238,8 +238,8 @@ bool INI::iniFileReader::isSameItem(iChainedIniItem * oldItem, iChainedIniItem *
 	{
 		return false;
 	}
-	return isSame(oldIniItem->getKey(), newIniItem->getKey())
-		&& isSame(oldIniItem->getValue(), newIniItem->getValue());
+	return oldIniItem->getKey() == newIniItem->getKey()
+		&& oldIniItem->getValue() == newIniItem->getValue();
 }
 
 bool INI::iniFileReader::getFileTimes(FILETIME * ftCreate, FILETIME *ftAccess, FILETIME *ftWrite)

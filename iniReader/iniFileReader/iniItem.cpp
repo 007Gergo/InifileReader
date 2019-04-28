@@ -1,113 +1,96 @@
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include "iniItem.h"
 
-INI::iniItem::iniItem(const char * const line)
+INI::iniItem::iniItem(const std::string& line)
 	: iIniItem(line)
 {
-	mKey = nullptr;
-	mValue = nullptr;
-	if (!line)
+	try
 	{
-		return;
+		mKey.clear();
+		mValue.clear();
+		if (line.empty())
+		{
+			return;
+		}
+
+		size_t valueLen = line.find("=");
+		if (valueLen == std::string::npos)
+		{
+			mKey = line;
+			return;
+		}
+		size_t keyLen = valueLen;
+		while (keyLen && line.at(valueLen) == ' ')
+		{
+			--keyLen;
+		}
+		mKey = line.substr(0, keyLen);
+		const size_t lineLen = line.length();
+		if (valueLen == lineLen)
+		{
+			return;
+		}
+		valueLen++;
+		while (valueLen < lineLen && line.at(valueLen) == ' ')
+		{
+			++valueLen;
+		}
+		mValue = line.substr(valueLen);
 	}
-	const size_t lineLen = strlen(line);
-	const char * itr = line;
-	while (*itr && *itr != '=')
+	catch (std::exception & e)
 	{
-		++itr;
+		std::string errMessage = "in iniItem::iniItem(line): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	if (!*itr)
-	{
-		setKey(line);
-		setValue(nullptr);
-		return;
-	}
-	size_t len = itr - line;
-	//rigthtrim
-	while (len && line[len - 1] == ' ')
-	{
-		--len;
-	}
-	//handling empty string as nullptr
-	if (len)
-	{
-		mKey = new char[len + 1];
-		strncpy_s(mKey, len + 1, line, len);
-		mKey[len] = '\0';
-	}
-	setValue(++itr);
 }
 
 INI::iniItem::~iniItem()
 {
-	delete[] mKey;
-	delete[] mValue;
 }
 
-void INI::iniItem::setKey(const char * const to)
+bool INI::iniItem::operator==(const INI::iIniItem& other) const
 {
-	delete[] mKey;
-	mKey = nullptr;
-
-	//handling empty string as nullptr
-	if (to && *to)
+	if (typeid(*this) != typeid(other))
 	{
-		size_t len = strlen(to);
-		// rigthtrim
-		while (len && to[len - 1] == ' ')
-		{
-			--len;
-		}
-		if (len)
-		{
-			++len;
-			mKey = new char[len];
-			strcpy_s(mKey, len, to);
-		}
+		return false;
 	}
+	return mKey == static_cast<const iniItem&>(other).mKey
+		&& mValue == static_cast<const iniItem&>(other).mValue;
 }
 
-void INI::iniItem::setValue(const char * const to)
+bool INI::iniItem::operator<(const INI::iIniItem& other) const
 {
-	delete[] mValue;
-	mValue = nullptr;
-	const char * itr = to;
-	// leftrim
-	while (itr && *itr == ' ')
+	if (typeid(*this) != typeid(other))
 	{
-		++itr;
+		return false;
 	}
-	//handling empty string as nullptr
-	if (itr && *itr)
-	{
-		const size_t len = strlen(itr) + 1;
-		mValue = new char[len];
-		strcpy_s(mValue, len, itr);
-	}
+	return mKey < other.getKey()
+		|| (mKey == other.getKey() && mValue == other.getValue());
 }
 
-bool INI::iniItem::hasKey()
+void INI::iniItem::setKey(const std::string& to)
+{
+	mKey = to;
+}
+
+void INI::iniItem::setValue(const std::string& to)
+{
+	mValue = to;
+}
+
+const std::string& INI::iniItem::getKey() const
 {
 	return mKey;
 }
 
-bool INI::iniItem::hasValue()
+const std::string& INI::iniItem::getValue() const
 {
 	return mValue;
 }
 
-const char * const INI::iniItem::getKey()
+void INI::iniItem::print() const
 {
-	return mKey;
-}
-
-const char * const INI::iniItem::getValue()
-{
-	return mValue;
-}
-
-void INI::iniItem::print()
-{
-	printf("%s = %s\n", hasKey() ? getKey() : "", hasValue() ? getValue() : "");
+	printf("%s = %s\n", getKey().c_str(), getValue().c_str());
 }

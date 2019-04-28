@@ -65,7 +65,7 @@ INI::iIniItem const * INI::iniSection::find(const char * const key)
 		{
 			continue;
 		}
-		const char * const currentKey = iniItem->getKey();
+		const char * const currentKey = iniItem->getKey().c_str();
 		if (!key && !currentKey)
 		{
 			return iniItem;
