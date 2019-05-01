@@ -1,7 +1,5 @@
 #pragma once
 #include "..\iIniFileReader\iIniFileReader.h"
-#include "..\iIniFileReader\iChainedIniSection.h"
-#include "..\iIniFileReader\iChainedIniItem.h"
 
 namespace INI
 {
@@ -9,32 +7,30 @@ namespace INI
 		public iIniFileReader
 	{
 	public:
-		iniFileReader(const char * const fileName);
+		iniFileReader(const std::string & name);
 		virtual ~iniFileReader();
-		virtual iChainedIniSection * getSections();
+		virtual const std::list<iIniSection *> & getSections() const;
 		virtual bool load();
 		virtual bool reloadIfChanged();
-		virtual bool hasError();
-		virtual void print();
-		virtual iIniSection * findSection(const char * const name);
+		virtual bool hasError() const;
+		virtual void print() const;
+		virtual iIniSection * findSection(const std::string & name) const;
 
 	private:
-		bool isEmptyLine(const char * const line);
-		bool isComment(const char * const line);
-		bool isSection(const char * const line);
-		bool isItem(const char * const line);
+		bool isEmptyLine(const std::string & line);
+		bool isComment(const std::string & line);
+		bool isSection(const std::string & line);
+		bool isItem(const std::string & line);
 
-		void clearIniSections(iChainedIniSection * iniSections);
-		const char * const getSectionName(const char * const line, bool & isOk);
-		iIniSection * addSection(const char * const name);
+		void clearIniSections(std::list<iIniSection *> & iniSections);
+		const std::string getSectionName(const std::string & line, bool & isOk);
+		iIniSection * addSection(const std::string & name);
 		bool getFileTimes(FILETIME * ftCreate, FILETIME *ftAccess, FILETIME *ftWrite);
-		bool isSameSection(iChainedIniSection * oldSection, iChainedIniSection * newSection);
-		bool isSameItem(iChainedIniItem * oldItem, iChainedIniItem * newItem);
+		bool isSameSection(const iIniSection * const oldIniSection, const iIniSection * const newIniSection) const;
 
 		bool mHasError;
-		char * mFileName;
-		iChainedIniSection * mIniSections;
-		iChainedIniSection * mLastIniSection;
+		std::string mName;
+		std::list<iIniSection *> mIniSections;
 		FILETIME mFtCreat;
 		FILETIME mFtAccess;
 		FILETIME mFtWrite;

@@ -1,407 +1,445 @@
-#include <string.h>
 #include <stdio.h>
 #include <windows.h>
 #include "iniFileReader.h"
-#include "chainedIniSection.h"
-#include "chainedIniItem.h"
 #include "iniSection.h"
 #include "iniItem.h"
 
 #define MAXBUFFERSIZE 1024
 
-bool isSame(const char * const str1, const char * const str2)
+INI::iniFileReader::iniFileReader(const std::string &name)
+	: iIniFileReader(name)
+	, mName(name), mHasError(true), mIniSections({})
+	, mFtCreat({ 0, 0 }), mFtAccess({ 0, 0 }), mFtWrite({ 0, 0 })
 {
-	if (!str1 && !str2)
-	{
-		return true;
-	}
-	if (!str1 && !str2)
-	{
-		return true;
-	}
-	if (!str1 || !str2)
-	{
-		return false;
-	}
-	return !strcmp(str1, str2);
-};
-
-
-INI::iniFileReader::iniFileReader(const char * const fileName)
-	: iIniFileReader(), mHasError(true), mFileName(nullptr), mIniSections(nullptr)
-{
-	if (fileName && fileName)
-	{
-		const size_t len = strlen(fileName) + 1;
-		mFileName = new char[len];
-		strcpy_s(mFileName, len, fileName);
-	}
-	mFtCreat = { 0, 0 };
-	mFtAccess = { 0, 0 };
-	mFtWrite = { 0, 0 };
 }
 
 INI::iniFileReader::~iniFileReader()
 {
-	delete[] mFileName;
 	clearIniSections(mIniSections);
 }
 
-INI::iChainedIniSection * INI::iniFileReader::getSections()
+const std::list<INI::iIniSection *> & INI::iniFileReader::getSections() const
 {
 	return mIniSections;
 };
 
-void INI::iniFileReader::clearIniSections(iChainedIniSection * iniSections)
+void INI::iniFileReader::clearIniSections(std::list<INI::iIniSection *> & iniSections)
 {
-	iChainedIniSection * current = iniSections;
-	while (current)
+	try
 	{
-		auto next = current->next();
-		delete current->get();
-		delete current;
-		current = next;
+		for (auto &current : iniSections)
+		{
+			delete current;
+		}
 	}
-	iniSections = nullptr;
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::clearIniSections(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
 }
 
 bool INI::iniFileReader::load()
 {
-	clearIniSections(mIniSections);
-	mLastIniSection = nullptr;
-	if (!mFileName)
-	{
-		printf("[ERR] Can't open file: file name is empty!\n");
+	try {
 		mHasError = true;
-		return false;
-	}
-	if (!getFileTimes(&mFtCreat, &mFtAccess, &mFtWrite))
-	{
-		printf("[ERR] Can't open file %s\n", mFileName);
-		mHasError = true;
-		return false;
-	}
-	FILE *file;
-	if (fopen_s(&file, mFileName, "r") || !file)
-	{
-		printf("[ERR] Can't open file %s\n", mFileName);
-		mHasError = true;
-		return false;
-	}
-
-	char line[MAXBUFFERSIZE + 1];
-	mHasError = false;
-	int lineNo = 0;
-	iIniSection * currentSection = nullptr;
-	while (fgets(line, sizeof(line), file) != nullptr) /* read a line */
-	{
-		++lineNo;
-		size_t lineLen = strlen(line);
-		while (lineLen && (line[lineLen - 1] == '\r' || line[lineLen - 1] == '\n'))
+		clearIniSections(mIniSections);
+		if (mName.empty())
 		{
-			line[lineLen - 1] = '\0';
-			--lineLen;
+			std::string errMessage = "in iniFileReader::load(): ";
+			errMessage + "Can't open file: file name is empty!\n";
+			throw(std::exception(errMessage.c_str()));
+			return false;
 		}
-		if (lineLen == MAXBUFFERSIZE)
+		if (!getFileTimes(&mFtCreat, &mFtAccess, &mFtWrite))
 		{
-			printf("[ERR] line %d is to long: %s\n", lineNo, line);
-			mHasError = true;
-			continue;
+			std::string errMessage = "in iniFileReader::load(): ";
+			errMessage + "Can't open file: " + mName + "\n";
+			throw(std::exception(errMessage.c_str()));
+			return false;
 		}
-		if (isEmptyLine(line))
+		FILE *file;
+		if (fopen_s(&file, mName.c_str(), "r") || !file)
 		{
-			continue;
-		}
-		if (isComment(line))
-		{
-			continue;
+			std::string errMessage = "in iniFileReader::load(): ";
+			errMessage + "Can't open file: " + mName + "\n";
+			throw(std::exception(errMessage.c_str()));
+			return false;
 		}
 
-		if (isSection(line))
+		char line[MAXBUFFERSIZE + 1];
+		mHasError = false;
+		int lineNo = 0;
+		iIniSection * currentSection = nullptr;
+		while (fgets(line, sizeof(line), file) != nullptr) /* read a line */
 		{
-			bool isOK = false;
-			const char * const currentName = getSectionName(line, isOK);
-			if (!isOK)
+			++lineNo;
+			size_t lineLen = strlen(line);
+			while (lineLen && (line[lineLen - 1] == '\r' || line[lineLen - 1] == '\n'))
 			{
-				printf("[ERR] Wrong foramated section in line %d: %s\n", lineNo, line);
+				line[lineLen - 1] = '\0';
+				--lineLen;
+			}
+			if (lineLen == MAXBUFFERSIZE)
+			{
+				printf("[ERR] line %d is to long: %s\n", lineNo, line);
 				mHasError = true;
 				continue;
 			}
-			currentSection = findSection(currentName);
-			if (!currentSection)
+			if (isEmptyLine(line))
 			{
+				continue;
+			}
+			if (isComment(line))
+			{
+				continue;
+			}
+
+			if (isSection(line))
+			{
+				bool isOK = false;
+				const std::string & currentName = getSectionName(line, isOK);
+				if (!isOK)
+				{
+					printf("[ERR] Wrong foramated section in line %d: %s\n", lineNo, line);
+					mHasError = true;
+					continue;
+				}
 				currentSection = addSection(currentName);
 			}
-		}
-		else if (isItem(line))
-		{
-			INI::iIniItem * newItem = new INI::iniItem(line);
-			if (newItem->getKey().empty())
+			else if (isItem(line))
 			{
-				printf("[ERR] Wrong foramated key-value pair in line %d: %s\n", lineNo, line);
+				INI::iIniItem * newItem = new INI::iniItem(line);
+				if (newItem->getKey().empty())
+				{
+					printf("[ERR] Wrong foramated key-value pair in line %d: %s\n", lineNo, line);
+					mHasError = true;
+				}
+				if (!currentSection)
+				{
+					printf("[WRN] key-value pair not in a section in line %d: %s\n", lineNo, line);
+					currentSection = addSection("");
+				}
+				currentSection->add(newItem);
+			}
+			else
+			{
+				printf("[ERR] Unknown line %d: %s\n", lineNo, line);
 				mHasError = true;
 			}
-			if (!currentSection)
-			{
-				printf("[WRN] key-value pair not in a section in line %d: %s\n", lineNo, line);
-				currentSection = addSection(nullptr);
-			}
-			currentSection->add(newItem);
 		}
-		else
+		fclose(file);
+		if (mHasError)
 		{
-			printf("[ERR] Unknown line %d: %s\n", lineNo, line);
-			mHasError = true;
+			throw(std::exception("Wrong foramated file. See the errors above.\n"));
 		}
 	}
-	fclose(file);
+	catch (std::exception & e)
+	{
+		mHasError = true;
+		std::string errMessage = "in iniFileReader::load(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
 	return mHasError;
 }
 
 bool INI::iniFileReader::reloadIfChanged()
 {
-	FILETIME ftCreate, ftAccess, ftWrite;
-	if (!getFileTimes(&ftCreate, &ftAccess, &ftWrite))
+	try
 	{
-		return true;
-	}
-	bool same = ftCreate.dwHighDateTime == mFtCreat.dwHighDateTime
-		&& ftCreate.dwLowDateTime == mFtCreat.dwLowDateTime
-		&& ftWrite.dwHighDateTime == mFtWrite.dwHighDateTime
-		&& ftWrite.dwLowDateTime == mFtWrite.dwLowDateTime;
-	if (same)
-	{
-		return false;
-	}
-	// file changed on disk ...
-	iChainedIniSection * oldIniSections = mIniSections;
-	mIniSections = nullptr;
-	load();
-	iChainedIniSection * oldSection = oldIniSections;
-	iChainedIniSection * newSection = mIniSections;
-	while (oldSection && newSection)
-	{
-		if (!isSameSection(newSection, oldSection))
+		FILETIME ftCreate, ftAccess, ftWrite;
+		if (!getFileTimes(&ftCreate, &ftAccess, &ftWrite))
 		{
-			break;
+			return true;
 		}
-		oldSection = oldSection->next();
-		newSection = newSection->next();
+		bool same = ftCreate.dwHighDateTime == mFtCreat.dwHighDateTime
+			&& ftCreate.dwLowDateTime == mFtCreat.dwLowDateTime
+			&& ftWrite.dwHighDateTime == mFtWrite.dwHighDateTime
+			&& ftWrite.dwLowDateTime == mFtWrite.dwLowDateTime;
+		if (same)
+		{
+			return false;
+		}
+		// file changed on disk ...
+		std::list<iIniSection *> oldIniSections = mIniSections;
+		mIniSections.clear();
+		load();
+		auto oldSectionItr = oldIniSections.cbegin();
+		auto newSectionItr = mIniSections.cbegin();
+		while (oldSectionItr != oldIniSections.cend()
+			&& newSectionItr != mIniSections.cend())
+		{
+			if (!isSameSection(*oldSectionItr, *newSectionItr))
+			{
+				return true;
+			}
+			++oldSectionItr;
+			++newSectionItr;
+		}
+		return !(oldSectionItr == oldIniSections.cend()
+			&& newSectionItr == mIniSections.cend());
 	}
-	same = !oldSection && !newSection;
-	return !same;
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::reloadIfChanged(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
 }
 
-bool INI::iniFileReader::isSameSection(iChainedIniSection * oldSection, iChainedIniSection * newSection)
+bool INI::iniFileReader::isSameSection(const iIniSection * const oldIniSection, const iIniSection * const newIniSection) const
 {
-	const auto oldIniSection = oldSection->get();
-	const auto newIniSection = newSection->get();
-	if (!oldIniSection && !newIniSection)
+	try
 	{
-		return true;
-	}
-	if (!oldIniSection || !newIniSection)
-	{
-		return false;
-	}
-
-	const char * const oldSectionName = oldIniSection->getName();
-	const char * const newSectionName = newIniSection->getName();
-	if (!isSame(oldSectionName, newSectionName))
-	{
-		return false;
-	}
-
-	iChainedIniItem * oldItem = oldIniSection->getIninItems();
-	iChainedIniItem * newItem = newIniSection->getIninItems();
-	while (oldItem && newItem)
-	{
-		if (!isSameItem(oldItem, newItem))
+		if (!oldIniSection && !newIniSection)
 		{
-			break;
+			return true;
 		}
-		oldItem = oldItem->next();
-		newItem = newItem->next();
-	}
-	return (!oldItem && !newItem);
-}
+		if (!oldIniSection || !newIniSection)
+		{
+			return false;
+		}
 
-bool INI::iniFileReader::isSameItem(iChainedIniItem * oldItem, iChainedIniItem * newItem)
-{
-	const auto oldIniItem = oldItem->get();
-	const auto newIniItem = newItem->get();
-	if (!oldIniItem && !newIniItem)
-	{
-		return true;
+		if (!(*oldIniSection == *newIniSection))
+		{
+			return false;
+		}
+
+		const auto & oldIniItems = oldIniSection->getIniItems();
+		const auto & newIniItems = newIniSection->getIniItems();
+
+		auto oldItemItr = oldIniItems.cbegin();
+		auto newItemItr = newIniItems.cbegin();
+		while (oldItemItr != oldIniItems.cend()
+			&& newItemItr != newIniItems.cend())
+		{
+			const iIniItem * oldItem = *oldItemItr;
+			const iIniItem * newItem = *newItemItr;
+
+			if (!oldItem || !newItem)
+			{
+				return false;
+			}
+			else if (oldItem && newItem)
+			{
+				if (!(*oldItem == *newItem))
+				{
+					return false;
+				}
+			}
+			++oldItemItr;
+			++newItemItr;
+		}
+		return (oldItemItr == oldIniItems.cend()
+			&& newItemItr == newIniItems.cend());
 	}
-	if (!oldIniItem || !newIniItem)
+	catch (std::exception & e)
 	{
-		return false;
+		std::string errMessage = "in iniFileReader::isSameSection(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	return oldIniItem->getKey() == newIniItem->getKey()
-		&& oldIniItem->getValue() == newIniItem->getValue();
 }
 
 bool INI::iniFileReader::getFileTimes(FILETIME * ftCreate, FILETIME *ftAccess, FILETIME *ftWrite)
 {
-	if (!mFileName || !ftCreate || !ftAccess || !ftWrite)
-	{
-		return false;
+	try {
+		if (mName.empty() || !ftCreate || !ftAccess || !ftWrite)
+		{
+			return false;
+		}
+		HANDLE hFile = CreateFile(mName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, 0, NULL);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			return false;
+		}
+		if (!GetFileTime(hFile, ftCreate, ftAccess, ftWrite))
+		{
+			return false;
+		}
+		CloseHandle(hFile);
 	}
-	HANDLE hFile = CreateFile(mFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-		OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
+	catch (std::exception & e)
 	{
-		return false;
+		std::string errMessage = "in iniFileReader::getFileTimes(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	if (!GetFileTime(hFile, ftCreate, ftAccess, ftWrite))
-	{
-		return false;
-	}
-	CloseHandle(hFile);
 	return true;
 }
 
-bool INI::iniFileReader::hasError()
+bool INI::iniFileReader::hasError() const
 {
 	return mHasError;
 }
 
-void INI::iniFileReader::print()
+void INI::iniFileReader::print() const
 {
-	printf("file '%s':\n", mFileName ? mFileName : "");
-	INI::iChainedIniSection * iter = mIniSections;
-	while (iter)
+	try
 	{
-		INI::iIniSection * iniSection = iter->get();
-		if (iniSection)
+		printf("file '%s':\n", mName.c_str());
+		for (const auto & iniSection : mIniSections)
 		{
-			iniSection->print();
+			if (iniSection)
+			{
+				iniSection->print();
+			}
 		}
-		iter = iter->next();
+		printf("\n");
 	}
-	printf("\n");
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::print(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
+
 }
 
-bool INI::iniFileReader::isEmptyLine(const char * const line)
+bool INI::iniFileReader::isEmptyLine(const std::string & line)
 {
-	if (!line)
-	{
-		return true;
+	try {
+		return line.find_first_not_of(" \t") == std::string::npos;
 	}
-	const char * itr = line;
-	while (*itr == ' ' || *itr == '\t')
+	catch (std::exception & e)
 	{
-		++itr;
+		std::string errMessage = "in iniFileReader::isEmptyLine(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	return  !*itr;
+	return false;
 }
 
-bool INI::iniFileReader::isComment(const char * const line)
+bool INI::iniFileReader::isComment(const std::string & line)
 {
-	if (!line)
-	{
-		return false;
+	try {
+		if (line.empty())
+		{
+			return false;
+		}
+		return line.at(0) == ';';
 	}
-	return *line == ';';
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::isComment(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
+	return false;
 }
 
-bool INI::iniFileReader::isSection(const char * const line)
+bool INI::iniFileReader::isSection(const std::string & line)
 {
-	if (!line)
-	{
-		return false;
+	try {
+		if (line.length() < 2)
+		{
+			return false;
+		}
+		return line.at(0) == '[' && line.at(line.length() - 1) == ']';
 	}
-	return *line == '[';
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::isSection(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
+	return false;
 }
 
-bool INI::iniFileReader::isItem(const char * const line)
+bool INI::iniFileReader::isItem(const std::string & line)
 {
-	if (!line)
+	try
 	{
-		return false;
+		return line.find("=") != std::string::npos;
 	}
-	const char * itr = line;
-	while (*itr && *itr != '=')
+	catch (std::exception & e)
 	{
-		++itr;
+		std::string errMessage = "in iniFileReader::isItem(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	return  *itr == '=';
 }
 
-const char * const INI::iniFileReader::getSectionName(const char * const line, bool & isOk)
+const std::string INI::iniFileReader::getSectionName(const std::string& line, bool & isOk)
 {
 	isOk = false;
-	if (!line)
-	{
-		return nullptr;
+	try {
+		if (!isSection(line))
+		{
+			return "";
+		}
+		isOk = true;
+		return line.substr(1, line.length() - 2);
 	}
-	const char * section = line;
-	++section;
-	const char * itr = section;
-	while (*itr && *itr != ']')
+	catch (std::exception & e)
 	{
-		++itr;
+		std::string errMessage = "in iniFileReader::getSectionName(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-
-	if (!*itr)
-	{
-		/// missing ']'
-		return nullptr;
-	}
-
-	const size_t len = itr - section;
-
-	++itr;
-	if (*itr)
-	{
-		/// extra character after ']'
-		return nullptr;
-	}
-
-	char * currentSection = nullptr;
-	if (len)
-	{
-		currentSection = new char[len + 1];
-		strncpy_s(currentSection, len + 1, section, len);
-		currentSection[len] = '\0';
-	}
-	isOk = true;
-	return currentSection;
+	return "";
 }
 
-INI::iIniSection * INI::iniFileReader::findSection(const char * const name)
+INI::iIniSection * INI::iniFileReader::findSection(const std::string & name) const
 {
-	INI::iChainedIniSection * current = mIniSections;
-	while (current)
+	try
 	{
-		INI::iIniSection * section = current->get();
-		if (!section)
+		for (const auto & iniSection : mIniSections)
 		{
-			continue;
+			if (iniSection && iniSection->getName() == name)
+			{
+				return iniSection;
+			}
 		}
-		const char * const currentName = section->getName();
-		if (isSame(name, currentName))
-		{
-			return section;
-		}
-		current = current->next();
+	}
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::findSection(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
 	return nullptr;
 }
 
-INI::iIniSection * INI::iniFileReader::addSection(const char * const name)
+template <typename T> bool pComp(const T * const & a, const T * const & b)
 {
-	INI::iIniSection * aSection = new INI::iniSection(name);
-	INI::iChainedIniSection * newSection = new INI::chainedIniSection(aSection);
-	if (mLastIniSection)
+	if (!a || !b)
 	{
-		mLastIniSection->setNext(newSection);
+		return false;
 	}
-	else
+	if (!a)
 	{
-		mIniSections = newSection;
+		return true;
 	}
-	mLastIniSection = newSection;
-	return aSection;
+	if (!b)
+	{
+		return false;
+	}
+	return *a < *b;
+}
+
+INI::iIniSection * INI::iniFileReader::addSection(const std::string & name)
+{
+	try
+	{
+		INI::iIniSection * aSection = findSection(name);
+		if (aSection)
+		{
+			return aSection;
+		}
+		aSection = new INI::iniSection(name);
+		mIniSections.emplace_back(aSection);
+		mIniSections.sort(pComp<INI::iIniSection>);
+		return aSection;
+	}
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniFileReader::addSection(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
+	return nullptr;
 }

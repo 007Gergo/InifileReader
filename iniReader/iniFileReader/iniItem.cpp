@@ -1,4 +1,3 @@
-#include <string>
 #include <stdio.h>
 #include "iniItem.h"
 
@@ -21,7 +20,7 @@ INI::iniItem::iniItem(const std::string& line)
 			return;
 		}
 		size_t keyLen = valueLen;
-		while (keyLen && line.at(valueLen) == ' ')
+		while (keyLen && line.at(keyLen - 1) == ' ')
 		{
 			--keyLen;
 		}
@@ -56,8 +55,8 @@ bool INI::iniItem::operator==(const INI::iIniItem& other) const
 	{
 		return false;
 	}
-	return mKey == static_cast<const iniItem&>(other).mKey
-		&& mValue == static_cast<const iniItem&>(other).mValue;
+	return mKey == other.getKey()
+		&& mValue == other.getValue();
 }
 
 bool INI::iniItem::operator<(const INI::iIniItem& other) const
@@ -67,7 +66,7 @@ bool INI::iniItem::operator<(const INI::iIniItem& other) const
 		return false;
 	}
 	return mKey < other.getKey()
-		|| (mKey == other.getKey() && mValue == other.getValue());
+		|| (mKey == other.getKey() && mValue < other.getValue());
 }
 
 void INI::iniItem::setKey(const std::string& to)

@@ -22,9 +22,11 @@ int main(int argv, char** argc)
 		ini->print();
 		delete ini;
 	}
-	catch (...)
+	catch (std::exception & e)
 	{
-		printf("[ERR] Somthing went wrong.\n");
+		std::string errMessage = "[ERR] In main(): ";
+		errMessage += e.what();
+		printf("%s\n", errMessage.c_str());
 		exit(-1);
 	}
 }

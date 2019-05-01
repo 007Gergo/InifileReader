@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include "..\iIniFileReader\iIniItem.h"
 
 namespace INI

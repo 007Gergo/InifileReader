@@ -1,17 +1,21 @@
 #pragma once
-#include "iChainedIniItem.h"
+#include <string>
+#include <list>
+#include "iIniItem.h"
 
 namespace INI
 {
 	class iIniSection
 	{
 	public:
-		iIniSection(const char * const name) {};
+		iIniSection(const std::string & name) {};
 		virtual ~iIniSection() {};
 		virtual bool add(iIniItem * item) = 0;
-		virtual const char * const getName() = 0;
-		virtual iChainedIniItem * getIninItems() = 0;
-		virtual iIniItem const * find(const char * const name) = 0;
-		virtual void print() = 0;
+		virtual const std::string & getName() const = 0;
+		virtual const std::list<iIniItem *> & getIniItems() const = 0;
+		virtual iIniItem const * find(const std::string & name) const = 0;
+		virtual void print() const = 0;
+		virtual bool operator==(const iIniSection& other) const = 0;
+		virtual bool operator<(const iIniSection& other) const = 0;
 	};
 }

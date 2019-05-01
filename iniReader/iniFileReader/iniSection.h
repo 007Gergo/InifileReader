@@ -1,24 +1,24 @@
 #pragma once
-#include <string.h>
-#include <stdio.h>
 #include "..\iIniFileReader\iIniSection.h"
-#include "chainedIniItem.h"
+
 namespace INI
 {
 	class iniSection
 		: public iIniSection
 	{
 	public:
-		iniSection(const char * const name);
+		iniSection(const std::string & name);
 		virtual ~iniSection();
 		virtual bool add(iIniItem * item);
-		virtual const char * const getName();
-		virtual iChainedIniItem * getIninItems();
-		virtual iIniItem const * find(const char * const name);
-		virtual void print();
+		virtual const std::string & getName() const;
+		virtual const std::list<iIniItem *> & getIniItems() const;
+		virtual iIniItem const * find(const std::string & name) const;
+		virtual void print() const;
+		virtual bool operator==(const iIniSection& other) const;
+		virtual bool operator<(const iIniSection& other) const;
+
 	private:
-		char * mName;
-		chainedIniItem * mIniItems;
-		chainedIniItem * mLastIniItem;
+		std::string mName;
+		std::list<iIniItem *> mIniItems;
 	};
 }

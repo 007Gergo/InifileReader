@@ -123,17 +123,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="chainedIniSection.h" />
     <ClInclude Include="iniItem.h" />
     <ClInclude Include="iniFileReader.h" />
-    <ClInclude Include="chainedIniItem.h" />
     <ClInclude Include="iniSection.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="chainedIniSection.cpp" />
     <ClCompile Include="iniItem.cpp" />
     <ClCompile Include="iniFileReader.cpp" />
-    <ClCompile Include="chainedIniItem.cpp" />
     <ClCompile Include="iniSection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

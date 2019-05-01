@@ -1,103 +1,123 @@
+#include <stdio.h>
 #include "iniSection.h"
 
-INI::iniSection::iniSection(const char * const name)
-	: iIniSection(name), mName(nullptr), mIniItems(nullptr), mLastIniItem(nullptr)
+INI::iniSection::iniSection(const std::string& name)
+	: iIniSection(name), mIniItems({})
 {
-	// handling empty string as nullptr
-	if (name && *name)
-	{
-		const size_t len = strlen(name) + 1;
-		mName = new char[len];
-		strcpy_s(mName, len, name);
-	}
+	mName = name;
 }
 
 INI::iniSection::~iniSection()
 {
-	delete[] mName;
-	iChainedIniItem * current = mIniItems;
-	while (current)
+	for (auto &current : mIniItems)
 	{
-		auto next = current->next();
-		delete current->get();
 		delete current;
-		current = next;
 	}
+}
+
+bool INI::iniSection::operator==(const INI::iIniSection& other) const
+{
+	if (typeid(*this) != typeid(other))
+	{
+		return false;
+	}
+	return mName == other.getName();
+}
+
+bool INI::iniSection::operator<(const INI::iIniSection& other) const
+{
+	if (typeid(*this) != typeid(other))
+	{
+		return false;
+	}
+	return mName < other.getName();
+}
+
+template <typename T> bool pComp(const T * const & a, const T * const & b)
+{
+	if (!a || !b)
+	{
+		return false;
+	}
+	if (!a)
+	{
+		return true;
+	}
+	if (!b)
+	{
+		return false;
+	}
+	return *a < *b;
 }
 
 bool INI::iniSection::add(iIniItem * item)
 {
-	INI::chainedIniItem * newItem = new INI::chainedIniItem(item);
-	if (mLastIniItem)
+	try
 	{
-		mLastIniItem->setNext(newItem);
+		mIniItems.emplace_back(item);
+		mIniItems.sort(pComp<INI::iIniItem>);
 	}
-	else
+	catch (std::exception & e)
 	{
-		mIniItems = newItem;
+		std::string errMessage = "in iniSectiom::add(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
-	mLastIniItem = newItem;
 	return true;
 }
 
-const char * const INI::iniSection::getName()
+const std::string & INI::iniSection::getName() const
 {
 	return mName;
 }
 
-INI::iChainedIniItem * INI::iniSection::getIninItems()
+const std::list<INI::iIniItem *> & INI::iniSection::getIniItems() const
 {
 	return mIniItems;
 }
 
-INI::iIniItem const * INI::iniSection::find(const char * const key)
+INI::iIniItem const * INI::iniSection::find(const std::string & key) const
 {
-	if (key && !key)
+	try
 	{
-		// convert empty string to nullptr;
-		find(nullptr);
+		for (const auto & iniItem : mIniItems)
+		{
+			if (iniItem && iniItem->getKey() == key)
+			{
+				return iniItem;
+			}
+		}
 	}
-	INI::iChainedIniItem * current = mIniItems;
-	while (current)
+	catch (std::exception & e)
 	{
-		INI::iIniItem * iniItem = current->get();
-		if (!iniItem)
-		{
-			continue;
-		}
-		const char * const currentKey = iniItem->getKey().c_str();
-		if (!key && !currentKey)
-		{
-			return iniItem;
-		}
-		if (!key || !currentKey)
-		{
-			continue;
-		}
-		if (!strcmp(key, currentKey))
-		{
-			return iniItem;
-		}
-		current = current->next();
+		std::string errMessage = "in iniSection::find(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
 	}
 	return nullptr;
 }
 
-void INI::iniSection::print()
+void INI::iniSection::print() const
 {
-	if (mName)
+	try
 	{
-		printf("[%s]\n", mName);
-	}
-	INI::iChainedIniItem * iter = mIniItems;
-	while (iter)
-	{
-		INI::iIniItem *	iniItem = iter->get();
-		if (iniItem)
+		if (!mName.empty())
 		{
-			iniItem->print();
+			printf("[%s]\n", mName.c_str());
 		}
-		iter = iter->next();
+		for (auto& iniItem : mIniItems)
+		{
+			if (iniItem)
+			{
+				iniItem->print();
+			}
+		}
+		printf("\n");
 	}
-	printf("\n");
+	catch (std::exception & e)
+	{
+		std::string errMessage = "in iniSection::print(): ";
+		errMessage += e.what();
+		throw(std::exception(errMessage.c_str()));
+	}
 }
