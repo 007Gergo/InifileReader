@@ -13,6 +13,10 @@ int main(int argv, char** argc)
 			exit(-1);
 		}
 		INI::iIniFileReader * ini = new INI::iniFileReader(argc[1]);
+		if (!ini)
+		{
+			throw(std::exception("Out of memory.\n"));
+		}
 		ini->load();
 		ini->print();
 		while (!ini->reloadIfChanged())

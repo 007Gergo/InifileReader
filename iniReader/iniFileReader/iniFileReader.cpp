@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <windows.h>
+#include <io.h>
 #include "iniFileReader.h"
 #include "iniSection.h"
 #include "iniItem.h"
@@ -8,8 +8,8 @@
 
 INI::iniFileReader::iniFileReader(const std::string &name)
 	: iIniFileReader(name)
-	, mName(name), mHasError(true), mIniSections({})
-	, mFtCreat({ 0, 0 }), mFtAccess({ 0, 0 }), mFtWrite({ 0, 0 })
+	, mName(name), mHasError(true)
+	, mFtCreat(0), mFtAccess(0), mFtWrite(0)
 {
 }
 
@@ -48,14 +48,14 @@ bool INI::iniFileReader::load()
 		if (mName.empty())
 		{
 			std::string errMessage = "in iniFileReader::load(): ";
-			errMessage + "Can't open file: file name is empty!\n";
+			errMessage += "Can't open file: file name is empty!\n";
 			throw(std::exception(errMessage.c_str()));
 			return false;
 		}
-		if (!getFileTimes(&mFtCreat, &mFtAccess, &mFtWrite))
+		if (!getFileTimes(mFtCreat, mFtAccess, mFtWrite))
 		{
 			std::string errMessage = "in iniFileReader::load(): ";
-			errMessage + "Can't open file: " + mName + "\n";
+			errMessage += "Can't open file: " + mName + "\n";
 			throw(std::exception(errMessage.c_str()));
 			return false;
 		}
@@ -63,7 +63,7 @@ bool INI::iniFileReader::load()
 		if (fopen_s(&file, mName.c_str(), "r") || !file)
 		{
 			std::string errMessage = "in iniFileReader::load(): ";
-			errMessage + "Can't open file: " + mName + "\n";
+			errMessage += "Can't open file: " + mName + "\n";
 			throw(std::exception(errMessage.c_str()));
 			return false;
 		}
@@ -111,6 +111,10 @@ bool INI::iniFileReader::load()
 			else if (isItem(line))
 			{
 				INI::iIniItem * newItem = new INI::iniItem(line);
+				if (!newItem)
+				{
+					throw(std::exception("Out of memory.\n"));
+				}
 				if (newItem->getKey().empty())
 				{
 					printf("[ERR] Wrong foramated key-value pair in line %d: %s\n", lineNo, line);
@@ -149,15 +153,13 @@ bool INI::iniFileReader::reloadIfChanged()
 {
 	try
 	{
-		FILETIME ftCreate, ftAccess, ftWrite;
-		if (!getFileTimes(&ftCreate, &ftAccess, &ftWrite))
+		time_t ftCreate, ftAccess, ftWrite;
+		if (!getFileTimes(ftCreate, ftAccess, ftWrite))
 		{
 			return true;
 		}
-		bool same = ftCreate.dwHighDateTime == mFtCreat.dwHighDateTime
-			&& ftCreate.dwLowDateTime == mFtCreat.dwLowDateTime
-			&& ftWrite.dwHighDateTime == mFtWrite.dwHighDateTime
-			&& ftWrite.dwLowDateTime == mFtWrite.dwLowDateTime;
+		bool same = ftCreate == mFtCreat
+			&& ftWrite == mFtWrite;
 		if (same)
 		{
 			return false;
@@ -243,24 +245,28 @@ bool INI::iniFileReader::isSameSection(const iIniSection * const oldIniSection, 
 	}
 }
 
-bool INI::iniFileReader::getFileTimes(FILETIME * ftCreate, FILETIME *ftAccess, FILETIME *ftWrite)
+bool INI::iniFileReader::getFileTimes(time_t & ftCreate, time_t & ftAccess, time_t & ftWrite)
 {
 	try {
-		if (mName.empty() || !ftCreate || !ftAccess || !ftWrite)
+		if (mName.empty())
 		{
 			return false;
 		}
-		HANDLE hFile = CreateFile(mName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
-			OPEN_EXISTING, 0, NULL);
-		if (hFile == INVALID_HANDLE_VALUE)
+		struct _finddata_t c_file;
+
+		intptr_t hFile = _findfirst(mName.c_str(), &c_file);
+		if (hFile == -1)
 		{
 			return false;
 		}
-		if (!GetFileTime(hFile, ftCreate, ftAccess, ftWrite))
+		ftCreate = c_file.time_create;
+		ftAccess = c_file.time_access;
+		ftWrite = c_file.time_write;
+		if (_findnext(hFile, &c_file) == -1 && errno != ENOENT)
 		{
 			return false;
 		}
-		CloseHandle(hFile);
+		_findclose(hFile);
 	}
 	catch (std::exception & e)
 	{
@@ -431,6 +437,10 @@ INI::iIniSection * INI::iniFileReader::addSection(const std::string & name)
 			return aSection;
 		}
 		aSection = new INI::iniSection(name);
+		if (!aSection)
+		{
+			throw(std::exception("Out of memory.\n"));
+		}
 		mIniSections.emplace_back(aSection);
 		mIniSections.sort(pComp<INI::iIniSection>);
 		return aSection;

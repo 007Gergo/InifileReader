@@ -25,14 +25,14 @@ namespace INI
 		void clearIniSections(std::list<iIniSection *> & iniSections);
 		const std::string getSectionName(const std::string & line, bool & isOk);
 		iIniSection * addSection(const std::string & name);
-		bool getFileTimes(FILETIME * ftCreate, FILETIME *ftAccess, FILETIME *ftWrite);
+		bool getFileTimes(time_t & ftCreate, time_t & ftAccess, time_t & ftWrite);
 		bool isSameSection(const iIniSection * const oldIniSection, const iIniSection * const newIniSection) const;
 
 		bool mHasError;
 		std::string mName;
 		std::list<iIniSection *> mIniSections;
-		FILETIME mFtCreat;
-		FILETIME mFtAccess;
-		FILETIME mFtWrite;
+		time_t mFtCreat;
+		time_t mFtAccess;
+		time_t mFtWrite;
 	};
 }
